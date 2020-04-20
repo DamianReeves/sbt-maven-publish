@@ -1,0 +1,28 @@
+{
+  "name": "sbt-maven-publish",
+  "version": "1.0.0",
+  "description": "A GitHub action to publish an sbt project to Maven",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build ./src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DamianReeves/sbt-maven-publish.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/DamianReeves/sbt-maven-publish/issues"
+  },
+  "homepage": "https://github.com/DamianReeves/sbt-maven-publish#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.3",
+    "@actions/github": "^2.1.1"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.1"
+  }
+}
