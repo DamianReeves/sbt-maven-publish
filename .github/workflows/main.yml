@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Hello world action step
         id: hello
-        uses: DamianReeves/sbt-maven-publish@v0.1
+        uses: DamianReeves/sbt-maven-publish@v0.2
         with:
           who-to-greet: "Damian Reeves"
       # Use the output from the `hello` step
