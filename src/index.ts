@@ -2,7 +2,8 @@ import { exportVariable, getInput, setFailed } from "@actions/core";
 import { mkdirP } from "@actions/io";
 import { exec } from "@actions/exec";
 import { writeFile } from "fs";
-import { resolve as resolvePath } from "path";
+import { join as joinPath, resolve as resolvePath } from "path";
+import { env } from "process";
 import { promisify } from "util";
 
 const writeFileAsync = promisify(writeFile);
@@ -44,12 +45,14 @@ function exportPassphrase(passphrase: string, variableName: string) {
     variableName = "PGP_PASSPHRASE";
   }
 
+  console.log(`Making PGP_PASSPHRASE available as: ${variableName}`);
   exportVariable(variableName, passphrase);
 }
 
 async function writeCredentialsFile(username: string, password: string) {
-  const targetPath = resolvePath("~/.sbt/sonatype_credentials");
-  await mkdirP("~/.sbt");
+  const targetDir = resolvePath(env["HOME"] || "~", ".sbt");
+  const targetPath = resolvePath(targetDir, "sonatype_credentials");
+  await mkdirP(targetDir);
   const fileContents = `realm=Sonatype Nexus Repository Manager
 host=oss.sonatype.org
 user=${username}
@@ -60,10 +63,11 @@ password=${password}
 }
 
 async function writeSonatypeDotSbtFile() {
-  const targetPath = resolvePath("~/.sbt/1.0/sonatype.sbt");
+  const targetDir = resolvePath(env["HOME"] || "~", ".sbt/1.0");
+  const targetPath = resolvePath(targetDir, "sonatype.sbt");
   const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
 
-  await mkdirP(resolvePath("~/.sbt/1.0/"));
+  await mkdirP(targetDir);
   await writeFileAsync(targetPath, fileContents, "utf8");
   return targetPath;
 }
