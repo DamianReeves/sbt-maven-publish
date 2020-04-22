@@ -996,6 +996,7 @@ function main() {
             console.log(`Wrote secret to: ${privateKeyPath}`);
             const publicKeyPath = yield writePublicKey(publicKey);
             console.log(`Wrote public key to: ${publicKeyPath}`);
+            yield importPrivateKey(privateKeyPath);
             yield execSbt(sbtArgs);
         }
         catch (error) {
@@ -1070,6 +1071,11 @@ function writePublicKey(contents) {
         yield io_1.mkdirP(targetDir);
         yield writeFileAsync(targetPath, contents, "utf8");
         return targetPath;
+    });
+}
+function importPrivateKey(pkPath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec_1.exec("gpg", ["--import", "--batch", pkPath]);
     });
 }
 function execSbt(args) {

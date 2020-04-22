@@ -42,6 +42,8 @@ async function main() {
     const publicKeyPath = await writePublicKey(publicKey);
     console.log(`Wrote public key to: ${publicKeyPath}`);
 
+    await importPrivateKey(privateKeyPath);
+
     await execSbt(sbtArgs);
   } catch (error) {
     setFailed(error.message);
@@ -114,6 +116,10 @@ async function writePublicKey(contents: string) {
   await mkdirP(targetDir);
   await writeFileAsync(targetPath, contents, "utf8");
   return targetPath;
+}
+
+async function importPrivateKey(pkPath: string) {
+  await exec("gpg", ["--import", "--batch", pkPath]);
 }
 
 async function execSbt(args: string) {
