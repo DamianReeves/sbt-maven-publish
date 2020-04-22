@@ -1,9 +1,16 @@
 on: [push]
 
 jobs:
-  hello_world_job:
+  config_test:
     runs-on: ubuntu-latest
     name: A job to say hello to me
     steps:
       - name: Test it
         uses: DamianReeves/sbt-maven-publish@master
+        with:
+          sonatype-username: test
+          sonatype-password: password
+          pgp-secret: "secret"
+          pgp-passphrase: "passphrase"
+          pgp-public-key: "public"
+          sbt-args: "tasks"
