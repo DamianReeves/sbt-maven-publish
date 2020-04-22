@@ -101,7 +101,7 @@ async function writePluginsDotSbtFile() {
 }
 
 async function writePrivateKey(contents: string) {
-  const targetDir = resolvePath(userHome, "tmp");
+  const targetDir = joinPath(userHome, "tmp");
   const targetPath = resolvePath(targetDir, "secret.asc");
   await mkdirP(targetDir);
   await writeFileAsync(targetPath, contents, "utf8");
@@ -109,7 +109,7 @@ async function writePrivateKey(contents: string) {
 }
 
 async function writePublicKey(contents: string) {
-  const targetDir = resolvePath(userHome, "tmp");
+  const targetDir = joinPath(userHome, "tmp");
   const targetPath = resolvePath(targetDir, "public.asc");
   await mkdirP(targetDir);
   await writeFileAsync(targetPath, contents, "utf8");

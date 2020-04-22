@@ -1056,7 +1056,7 @@ function writePluginsDotSbtFile() {
 }
 function writePrivateKey(contents) {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetDir = path_1.resolve(userHome, "tmp");
+        const targetDir = path_1.join(userHome, "tmp");
         const targetPath = path_1.resolve(targetDir, "secret.asc");
         yield io_1.mkdirP(targetDir);
         yield writeFileAsync(targetPath, contents, "utf8");
@@ -1065,7 +1065,7 @@ function writePrivateKey(contents) {
 }
 function writePublicKey(contents) {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetDir = path_1.resolve(userHome, "tmp");
+        const targetDir = path_1.join(userHome, "tmp");
         const targetPath = path_1.resolve(targetDir, "public.asc");
         yield io_1.mkdirP(targetDir);
         yield writeFileAsync(targetPath, contents, "utf8");
