@@ -1,18 +1,88 @@
-import { getInput, setOutput, setFailed } from "@actions/core";
-import { context } from "@actions/github";
-import { env } from "process";
+import { exportVariable, getInput, setFailed } from "@actions/core";
+import { mkdirP } from "@actions/io";
+import { exec } from "@actions/exec";
+import { writeFile } from "fs";
+import { resolve as resolvePath } from "path";
+import { promisify } from "util";
 
-try {
-  // `who-to-greet` input defined in action metadata file
-  const nameToGreet = getInput("who-to-greet");
-  console.log(`Hello ${nameToGreet}`);
-  const time = new Date().toTimeString();
-  setOutput("time", time);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(context.payload, undefined, 2);
-  console.log(`The event payload: ${payload}`);
-  // Environment info
-  console.log(`HOME: ${env.HOME}`);
-} catch (error) {
-  setFailed(error.message);
+const writeFileAsync = promisify(writeFile);
+
+main().catch((error) => setFailed(error.message));
+
+async function main() {
+  try {
+    const username = getInput("sonatype-username", { required: true });
+    const password = getInput("sonatype-password", { required: true });
+    const privateKey = getInput("pgp-secret", { required: true });
+    const passphrase = getInput("pgp-passphrase", { required: true });
+    const publicKey = getInput("pgp-public-key", { required: true });
+    const sbtArgs = getInput("sbt-args");
+    const passphraseVariable = getInput("pgp-passphrase-variable-name");
+
+    exportPassphrase(passphrase, passphraseVariable);
+
+    const credentialsPath = await writeCredentialsFile(username, password);
+    console.log(`Wrote sonatype credentials to ${credentialsPath}`);
+
+    const sonatypeSbtPath = await writeSonatypeDotSbtFile();
+    console.log(`Wrote sonatype sbt file to: ${sonatypeSbtPath}`);
+
+    const privateKeyPath = await writePrivateKey(privateKey);
+    console.log(`Wrote secret to: ${privateKeyPath}`);
+
+    const publicKeyPath = await writePublicKey(publicKey);
+    console.log(`Wrote public key to: ${publicKeyPath}`);
+
+    await execSbt(sbtArgs);
+  } catch (error) {
+    setFailed(error.message);
+  }
+}
+
+function exportPassphrase(passphrase: string, variableName: string) {
+  if (!variableName) {
+    variableName = "PGP_PASSPHRASE";
+  }
+
+  exportVariable(variableName, passphrase);
+}
+
+async function writeCredentialsFile(username: string, password: string) {
+  const targetPath = resolvePath("~/.sbt/sonatype_credentials");
+  await mkdirP("~/.sbt");
+  const fileContents = `realm=Sonatype Nexus Repository Manager
+host=oss.sonatype.org
+user=${username}
+password=${password}
+  `;
+  await writeFileAsync(targetPath, fileContents, "utf8");
+  return targetPath;
+}
+
+async function writeSonatypeDotSbtFile() {
+  const targetPath = resolvePath("~/.sbt/1.0/sonatype.sbt");
+  const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
+
+  await mkdirP(resolvePath("~/.sbt/1.0/"));
+  await writeFileAsync(targetPath, fileContents, "utf8");
+  return targetPath;
+}
+
+async function writePrivateKey(contents: string) {
+  const targetPath = resolvePath("/tmp/secret.asc");
+  await writeFileAsync(targetPath, contents, "utf8");
+  return targetPath;
+}
+
+async function writePublicKey(contents: string) {
+  const targetPath = resolvePath("/tmp/public.asc");
+  await writeFileAsync(targetPath, contents, "utf8");
+  return targetPath;
+}
+
+async function execSbt(args: string) {
+  if (!args) {
+    args = "+ publishSigned; sonatypeBundleRelease";
+  }
+  await exec("sbt", [args]);
 }

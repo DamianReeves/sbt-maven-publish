@@ -2,13 +2,30 @@ name: "sbt Maven Publish"
 author: "Damian Reeves"
 description: "Publish an sbt project to maven."
 inputs:
-  who-to-greet: # id of input
-    description: "Who to greet"
+  sonatype-username: # id of input
+    description: "Sonatype/Nexus user name"
     required: true
-    default: "World"
-outputs:
-  time: # id of output
-    description: "The time we greeted you"
+  sonatype-password:
+    description: "Sonatype/Nexus password"
+    required: true
+  pgp-secret:
+    description: "The PGP private key used for signing."
+    required: true
+  pgp-passphrase:
+    description: "The PGP passphrase for the secret key used for signing."
+    required: true
+  pgp-public-key:
+    description: "The PGP public key used to form the key ring"
+    required: true
+  sbt-args:
+    description: "The args to pass to sbt to perform the publishing"
+    required: false
+    default: "+ publishSigned; sonatypeBundleRelease"
+  pgp-passphrase-variable-name:
+    description: "The pgp-passphrase will be exported to an enviroment variable"
+    required: false
+    default: "PGP_PASSPHRASE"
+
 runs:
   using: "node12"
   main: "dist/index.js"
