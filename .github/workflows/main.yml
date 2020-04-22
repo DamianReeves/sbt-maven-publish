@@ -5,11 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     name: A job to say hello to me
     steps:
-      - name: Hello world action step
-        id: hello
-        uses: DamianReeves/sbt-maven-publish@v0.2
-        with:
-          who-to-greet: "Damian Reeves"
-      # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+      - name: Test it
+        run: echo 'HOME: $HOME'
+        
