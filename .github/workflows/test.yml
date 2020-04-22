@@ -7,5 +7,3 @@ jobs:
     steps:
       - name: Test it
         uses: DamianReeves/sbt-maven-publish@master
-        run: |
-          echo 'HOME: $HOME'
