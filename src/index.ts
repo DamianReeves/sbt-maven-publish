@@ -22,6 +22,8 @@ async function main() {
 
     exportPassphrase(passphrase, passphraseVariable);
 
+    console.log(`HOME: ${env["HOME"]}`);
+
     const credentialsPath = await writeCredentialsFile(username, password);
     console.log(`Wrote sonatype credentials to ${credentialsPath}`);
 
