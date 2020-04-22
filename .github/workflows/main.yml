@@ -6,5 +6,6 @@ jobs:
     name: A job to say hello to me
     steps:
       - name: Test it
-        run: echo 'HOME: $HOME'
+        run: |
+          echo 'HOME: $HOME'
         
