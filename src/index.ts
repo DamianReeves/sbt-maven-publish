@@ -1,12 +1,14 @@
 import { exportVariable, getInput, setFailed } from "@actions/core";
 import { mkdirP } from "@actions/io";
 import { exec } from "@actions/exec";
-import { writeFile } from "fs";
+import { appendFile, writeFile } from "fs";
 import { join as joinPath, resolve as resolvePath } from "path";
 import { env } from "process";
 import { promisify } from "util";
 
+const appendFileAsync = promisify(appendFile);
 const writeFileAsync = promisify(writeFile);
+const userHome = env["HOME"] || "/home/runner";
 
 main().catch((error) => setFailed(error.message));
 
@@ -22,13 +24,17 @@ async function main() {
 
     exportPassphrase(passphrase, passphraseVariable);
 
-    console.log(`HOME: ${env["HOME"]}`);
-
     const credentialsPath = await writeCredentialsFile(username, password);
     console.log(`Wrote sonatype credentials to ${credentialsPath}`);
 
     const sonatypeSbtPath = await writeSonatypeDotSbtFile();
     console.log(`Wrote sonatype sbt file to: ${sonatypeSbtPath}`);
+
+    const globalSbtPath = await writeGlobalDotSbtFile();
+    console.log(`Wrote global sbt file to: ${globalSbtPath}`);
+
+    const pluginsSbtPath = await writePluginsDotSbtFile();
+    console.log(`Wrote plugins sbt file to: ${pluginsSbtPath}`);
 
     const privateKeyPath = await writePrivateKey(privateKey);
     console.log(`Wrote secret to: ${privateKeyPath}`);
@@ -52,7 +58,7 @@ function exportPassphrase(passphrase: string, variableName: string) {
 }
 
 async function writeCredentialsFile(username: string, password: string) {
-  const targetDir = resolvePath(env["HOME"] || "~", ".sbt");
+  const targetDir = resolvePath(userHome, ".sbt");
   const targetPath = resolvePath(targetDir, "sonatype_credentials");
   await mkdirP(targetDir);
   const fileContents = `realm=Sonatype Nexus Repository Manager
@@ -65,23 +71,45 @@ password=${password}
 }
 
 async function writeSonatypeDotSbtFile() {
-  const targetDir = resolvePath(env["HOME"] || "~", ".sbt/1.0");
+  const targetDir = resolvePath(userHome, ".sbt/1.0");
   const targetPath = resolvePath(targetDir, "sonatype.sbt");
   const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
 
   await mkdirP(targetDir);
-  await writeFileAsync(targetPath, fileContents, "utf8");
+  await appendFileAsync(targetPath, fileContents, "utf8");
+  return targetPath;
+}
+
+async function writeGlobalDotSbtFile() {
+  const targetDir = resolvePath(userHome, ".sbt/1.0");
+  const targetPath = resolvePath(targetDir, "global.sbt");
+  const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
+
+  await mkdirP(targetDir);
+  await appendFileAsync(targetPath, fileContents, "utf8");
+  return targetPath;
+}
+
+async function writePluginsDotSbtFile() {
+  const targetDir = resolvePath(userHome, ".sbt/1.0/plugins");
+  const targetPath = resolvePath(targetDir, "plugins.sbt");
+  const fileContents = `addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.2")`;
+
+  await mkdirP(targetDir);
+  await appendFileAsync(targetPath, fileContents, "utf8");
   return targetPath;
 }
 
 async function writePrivateKey(contents: string) {
-  const targetPath = resolvePath("/tmp/secret.asc");
+  const targetDir = resolvePath(userHome, "tmp");
+  const targetPath = resolvePath(targetDir, "secret.asc");
   await writeFileAsync(targetPath, contents, "utf8");
   return targetPath;
 }
 
 async function writePublicKey(contents: string) {
-  const targetPath = resolvePath("/tmp/public.asc");
+  const targetDir = resolvePath(userHome, "tmp");
+  const targetPath = resolvePath(targetDir, "public.asc");
   await writeFileAsync(targetPath, contents, "utf8");
   return targetPath;
 }

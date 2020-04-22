@@ -969,7 +969,9 @@ const fs_1 = __webpack_require__(747);
 const path_1 = __webpack_require__(622);
 const process_1 = __webpack_require__(765);
 const util_1 = __webpack_require__(669);
+const appendFileAsync = util_1.promisify(fs_1.appendFile);
 const writeFileAsync = util_1.promisify(fs_1.writeFile);
+const userHome = process_1.env["HOME"] || "/home/runner";
 main().catch((error) => core_1.setFailed(error.message));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -982,11 +984,14 @@ function main() {
             const sbtArgs = core_1.getInput("sbt-args");
             const passphraseVariable = core_1.getInput("pgp-passphrase-variable-name");
             exportPassphrase(passphrase, passphraseVariable);
-            console.log(`HOME: ${process_1.env["HOME"]}`);
             const credentialsPath = yield writeCredentialsFile(username, password);
             console.log(`Wrote sonatype credentials to ${credentialsPath}`);
             const sonatypeSbtPath = yield writeSonatypeDotSbtFile();
             console.log(`Wrote sonatype sbt file to: ${sonatypeSbtPath}`);
+            const globalSbtPath = yield writeGlobalDotSbtFile();
+            console.log(`Wrote global sbt file to: ${globalSbtPath}`);
+            const pluginsSbtPath = yield writePluginsDotSbtFile();
+            console.log(`Wrote plugins sbt file to: ${pluginsSbtPath}`);
             const privateKeyPath = yield writePrivateKey(privateKey);
             console.log(`Wrote secret to: ${privateKeyPath}`);
             const publicKeyPath = yield writePublicKey(publicKey);
@@ -1007,7 +1012,7 @@ function exportPassphrase(passphrase, variableName) {
 }
 function writeCredentialsFile(username, password) {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetDir = path_1.resolve(process_1.env["HOME"] || "~", ".sbt");
+        const targetDir = path_1.resolve(userHome, ".sbt");
         const targetPath = path_1.resolve(targetDir, "sonatype_credentials");
         yield io_1.mkdirP(targetDir);
         const fileContents = `realm=Sonatype Nexus Repository Manager
@@ -1021,24 +1026,46 @@ password=${password}
 }
 function writeSonatypeDotSbtFile() {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetDir = path_1.resolve(process_1.env["HOME"] || "~", ".sbt/1.0");
+        const targetDir = path_1.resolve(userHome, ".sbt/1.0");
         const targetPath = path_1.resolve(targetDir, "sonatype.sbt");
         const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
         yield io_1.mkdirP(targetDir);
-        yield writeFileAsync(targetPath, fileContents, "utf8");
+        yield appendFileAsync(targetPath, fileContents, "utf8");
+        return targetPath;
+    });
+}
+function writeGlobalDotSbtFile() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const targetDir = path_1.resolve(userHome, ".sbt/1.0");
+        const targetPath = path_1.resolve(targetDir, "global.sbt");
+        const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
+        yield io_1.mkdirP(targetDir);
+        yield appendFileAsync(targetPath, fileContents, "utf8");
+        return targetPath;
+    });
+}
+function writePluginsDotSbtFile() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const targetDir = path_1.resolve(userHome, ".sbt/1.0/plugins");
+        const targetPath = path_1.resolve(targetDir, "plugins.sbt");
+        const fileContents = `addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.2")`;
+        yield io_1.mkdirP(targetDir);
+        yield appendFileAsync(targetPath, fileContents, "utf8");
         return targetPath;
     });
 }
 function writePrivateKey(contents) {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetPath = path_1.resolve("/tmp/secret.asc");
+        const targetDir = path_1.resolve(userHome, "tmp");
+        const targetPath = path_1.resolve(targetDir, "secret.asc");
         yield writeFileAsync(targetPath, contents, "utf8");
         return targetPath;
     });
 }
 function writePublicKey(contents) {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetPath = path_1.resolve("/tmp/public.asc");
+        const targetDir = path_1.resolve(userHome, "tmp");
+        const targetPath = path_1.resolve(targetDir, "public.asc");
         yield writeFileAsync(targetPath, contents, "utf8");
         return targetPath;
     });
