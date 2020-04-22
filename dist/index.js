@@ -967,6 +967,7 @@ const io_1 = __webpack_require__(1);
 const exec_1 = __webpack_require__(986);
 const fs_1 = __webpack_require__(747);
 const path_1 = __webpack_require__(622);
+const process_1 = __webpack_require__(765);
 const util_1 = __webpack_require__(669);
 const writeFileAsync = util_1.promisify(fs_1.writeFile);
 main().catch((error) => core_1.setFailed(error.message));
@@ -981,6 +982,7 @@ function main() {
             const sbtArgs = core_1.getInput("sbt-args");
             const passphraseVariable = core_1.getInput("pgp-passphrase-variable-name");
             exportPassphrase(passphrase, passphraseVariable);
+            console.log(`HOME: ${process_1.env["HOME"]}`);
             const credentialsPath = yield writeCredentialsFile(username, password);
             console.log(`Wrote sonatype credentials to ${credentialsPath}`);
             const sonatypeSbtPath = yield writeSonatypeDotSbtFile();
@@ -1000,12 +1002,14 @@ function exportPassphrase(passphrase, variableName) {
     if (!variableName) {
         variableName = "PGP_PASSPHRASE";
     }
+    console.log(`Making PGP_PASSPHRASE available as: ${variableName}`);
     core_1.exportVariable(variableName, passphrase);
 }
 function writeCredentialsFile(username, password) {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetPath = path_1.resolve("~/.sbt/sonatype_credentials");
-        yield io_1.mkdirP("~/.sbt");
+        const targetDir = path_1.resolve(process_1.env["HOME"] || "~", ".sbt");
+        const targetPath = path_1.resolve(targetDir, "sonatype_credentials");
+        yield io_1.mkdirP(targetDir);
         const fileContents = `realm=Sonatype Nexus Repository Manager
 host=oss.sonatype.org
 user=${username}
@@ -1017,9 +1021,10 @@ password=${password}
 }
 function writeSonatypeDotSbtFile() {
     return __awaiter(this, void 0, void 0, function* () {
-        const targetPath = path_1.resolve("~/.sbt/1.0/sonatype.sbt");
+        const targetDir = path_1.resolve(process_1.env["HOME"] || "~", ".sbt/1.0");
+        const targetPath = path_1.resolve(targetDir, "sonatype.sbt");
         const fileContents = `credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")`;
-        yield io_1.mkdirP(path_1.resolve("~/.sbt/1.0/"));
+        yield io_1.mkdirP(targetDir);
         yield writeFileAsync(targetPath, fileContents, "utf8");
         return targetPath;
     });
@@ -1585,6 +1590,13 @@ function isUnixExecutable(stats) {
 /***/ (function(module) {
 
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 765:
+/***/ (function(module) {
+
+module.exports = require("process");
 
 /***/ }),
 
